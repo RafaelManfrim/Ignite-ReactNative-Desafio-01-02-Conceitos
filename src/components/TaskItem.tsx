@@ -1,61 +1,108 @@
-import React from 'react';
-import { Image, TouchableOpacity, View, Text, StyleSheet, Alert } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { TouchableOpacity, View, Text, StyleSheet, Alert, TextInput } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 
 import { ItemWrapper } from './ItemWrapper';
-
-import trashIcon from '../assets/icons/trash/trash.png'
-import { Task } from './TasksList';
+import { Task, useTask } from '../data/TaskContext'
 
 interface TasksItemProps {
-    index: number;
-    item: Task
-    toggleTaskDone: (id: number) => void;
-    removeTask: (id: number) => void;
+  index: number;
+  item: Task
 }
 
-export function TaskItem({ index, item, toggleTaskDone, removeTask }: TasksItemProps) {
-    function handlePressRemoveTask(id: number) {
-        Alert.alert("Remover item", "Tem certeza que você deseja remover esse item?", [
-              { text: "Não" },
-              { text: "Sim", onPress: () => removeTask(id) }
-            ]
-        );
+export function TaskItem({ index, item }: TasksItemProps) {
+  const { handleRemoveTask, handleEditTask, handleToggleTaskDone } = useTask()
+
+  const [isEditingTask, setIsEditingTask] = useState(false)
+  const [taskTitle, setTaskTitle] = useState(item.title)
+
+  const textInputRef = useRef<TextInput>(null)
+
+  function handleStartEditing() {
+    setIsEditingTask(true)
+  }
+
+  function handleCancelEditing() {
+    setIsEditingTask(false)
+  }
+
+  function handleSubmitTaskEdited() {
+    handleEditTask(item.id, taskTitle)
+    setIsEditingTask(false)
+  }
+
+  useEffect(() => {
+    if (textInputRef.current) {
+      if (isEditingTask) {
+        textInputRef.current.focus();
+      } else {
+        textInputRef.current.blur();
+      }
     }
+  }, [isEditingTask])
 
-    return (
-        <ItemWrapper index={index}>
-            <View>
-              <TouchableOpacity
-                testID={`button-${index}`}
-                activeOpacity={0.7}
-                style={styles.taskButton}
-                onPress={() => toggleTaskDone(item.id)}
-              >
-                <View 
-                  testID={`marker-${index}`}
-                  style={item.done ? styles.taskMarkerDone : styles.taskMarker}
-                >
-                  { item.done && (
-                    <Icon name="check" size={12} color="#FFF" />
-                  )}
-                </View>
+  function handlePressRemoveTask(id: number) {
+    Alert.alert("Remover item", "Tem certeza que você deseja remover esse item?", [
+        { text: "Não" },
+        { text: "Sim", onPress: () => handleRemoveTask(id) }
+      ]
+    );
+  }
 
-                <Text style={item.done ? styles.taskTextDone : styles.taskText}>
-                  {item.title}
-                </Text>
-              </TouchableOpacity>
-            </View>
+  return (
+    <ItemWrapper index={index}>
+      <View>
+        <TouchableOpacity
+          testID={`button-${index}`}
+          activeOpacity={0.7}
+          style={styles.taskButton}
+          onPress={() => handleToggleTaskDone(item.id)}
+        >
+          <View 
+            testID={`marker-${index}`}
+            style={item.done ? styles.taskMarkerDone : styles.taskMarker}
+          >
+            { item.done && (
+              <Icon name="check" size={12} color="#FFF" />
+            )}
+          </View>
 
-            <TouchableOpacity
-              testID={`trash-${index}`}
-              style={{ paddingHorizontal: 24 }}
-              onPress={() => handlePressRemoveTask(item.id)}
-            >
-              <Image source={trashIcon} />
-            </TouchableOpacity>
-        </ItemWrapper>
-    )
+          <TextInput 
+            style={item.done ? styles.taskTextDone : styles.taskText} 
+            value={taskTitle} 
+            onChangeText={setTaskTitle}
+            editable={isEditingTask}
+            onSubmitEditing={handleSubmitTaskEdited}
+            ref={textInputRef}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.buttonArea}>
+        {isEditingTask ? (
+          <TouchableOpacity onPress={() => handleCancelEditing()}>
+            <Icon name="x" size={16} color="#999" />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity testID={`trash-${index}`} onPress={() => handleStartEditing()}>
+            <Icon name="edit" size={16} color="#66F" />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          testID={`trash-${index}`}
+          style={{ paddingRight: 24, paddingLeft: 16 }}
+          onPress={() => {
+            if(!isEditingTask) {
+              handlePressRemoveTask(item.id)
+            }
+          }}
+        >
+          <Icon name="trash" size={16} color={isEditingTask ? "#999" : "#F66"} />
+        </TouchableOpacity>
+      </View>
+
+    </ItemWrapper>
+  )
 }
 
 const styles = StyleSheet.create({
@@ -79,8 +126,9 @@ const styles = StyleSheet.create({
       justifyContent: 'center'
     },
     taskText: {
+      padding: 0,
       color: '#666',
-      fontFamily: 'Inter-Medium'
+      fontFamily: 'Inter-Medium',
     },
     taskMarkerDone: {
       height: 16,
@@ -92,8 +140,13 @@ const styles = StyleSheet.create({
       justifyContent: 'center'
     },
     taskTextDone: {
+      padding: 0,
       color: '#1DB863',
       textDecorationLine: 'line-through',
       fontFamily: 'Inter-Medium'
+    },
+    buttonArea: {
+      display: 'flex',
+      flexDirection: 'row'
     }
 })

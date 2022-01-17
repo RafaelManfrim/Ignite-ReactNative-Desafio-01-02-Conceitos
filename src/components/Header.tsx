@@ -3,12 +3,12 @@ import { View, Text, StyleSheet, Image } from 'react-native';
 import { getStatusBarHeight } from 'react-native-iphone-x-helper';
 
 import logoImg from '../assets/images/logo/logo.png';
+import { useTask } from '../data/TaskContext';
 
-interface HeaderProps {
-  tasksCounter: number;
-}
-
-export function Header({ tasksCounter }: HeaderProps) {
+export function Header() {
+  const { tasks } = useTask()
+  
+  const tasksCounter = tasks.length
   const tasksCounterText =  tasksCounter === 1 ? 'tarefa' : 'tarefas'
   
   return (

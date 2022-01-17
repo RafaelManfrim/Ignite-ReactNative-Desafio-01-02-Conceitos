@@ -1,20 +1,11 @@
 import React from 'react';
 import { FlatList, FlatListProps } from 'react-native';
+import { useTask } from '../data/TaskContext';
 import { TaskItem } from './TaskItem';
 
-export interface Task {
-  id: number;
-  title: string;
-  done: boolean;
-}
+export function TasksList() {
+  const { tasks } = useTask()
 
-interface TasksListProps {
-  tasks: Task[];
-  toggleTaskDone: (id: number) => void;
-  removeTask: (id: number) => void;
-}
-
-export function TasksList({ tasks, toggleTaskDone, removeTask }: TasksListProps) {
   return (
     <FlatList
       data={tasks}
@@ -22,7 +13,7 @@ export function TasksList({ tasks, toggleTaskDone, removeTask }: TasksListProps)
       contentContainerStyle={{ paddingBottom: 24 }}
       showsVerticalScrollIndicator={false}
       renderItem={({ item, index }) => {
-        return <TaskItem item={item} index={index} toggleTaskDone={toggleTaskDone} removeTask={removeTask} />
+        return <TaskItem item={item} index={index} />
       }}
       style={{
         marginTop: 32
